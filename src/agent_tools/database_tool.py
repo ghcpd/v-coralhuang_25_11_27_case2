@@ -136,7 +136,10 @@ class DatabaseTool:
     def _create_connection(self):
         """Simulated database connection"""
         # In real implementation, this would create actual DB connection
-        return {"status": "connected"}
+        from unittest.mock import Mock
+        mock_conn = Mock()
+        mock_conn.status = "connected"
+        return mock_conn
     
     def _execute_query(self, connection, query):
         """Simulated query execution"""
