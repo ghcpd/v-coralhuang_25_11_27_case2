@@ -1,0 +1,133 @@
+# Task: Refactor Agent Tools with Automated Testing
+
+You are a backend engineer reviewing legacy AI agent tools that have accumulated significant technical debt. Your task is to refactor the codebase to eliminate duplication, improve maintainability, and establish a robust testing framework.
+
+Refactor the provided AI agent tools (`database_tool.py`, `api_tool.py`) to **eliminate code duplication (~80%)**, **improve clarity**, and implement **comprehensive automated testing** with **one-command setup**.
+
+---
+
+## Goal
+Transform duplicated, unclear code into maintainable, well-tested implementations following SOLID principles.
+
+---
+
+## Problem Analysis
+
+### Existing Code Issues
+- **database_tool.py**: 3 methods (`query_users`, `query_products`, `query_orders`) - each 60+ lines with 50 lines duplicated
+- **api_tool.py**: 3 methods (`fetch_weather`, `fetch_news`, `fetch_stock_price`) - each 30+ lines with 28 lines duplicated
+
+### Key Problems
+1. **80% Code Duplication** - Connection, error handling, response formatting repeated
+2. **Unclear Logic** - Business logic mixed with error handling and logging
+3. **SQL Injection Risk** - String concatenation: `f"SELECT * FROM users WHERE id = {user_id}"`
+4. **Maintenance Overhead** - Change error format = modify 6+ places
+
+---
+
+## Deliverables
+
+### 1. Refactored Code (3 files)
+- `base_tool.py` - Shared utilities (response format, error decorator, logging)
+- `database_tool_refactored.py` - Generic query method, parameterized SQL, config-driven fields
+- `api_tool_refactored.py` - Generic request method, unified headers/error handling
+
+### 2. Test Suite (3 files)
+- `test_database_tool.py`, `test_api_tool.py`, `test_base_tool.py`
+- Use pytest, fixtures, mocking (unittest.mock), parametrize
+- Unit tests + comparison tests (original vs refactored outputs match)
+
+### 3. Environment Setup (PowerShell & Bash)
+- `requirements.txt` (requests>=2.31.0) + `requirements-dev.txt` (pytest>=7.4.0, pytest-mock>=3.12.0)
+- `setup_env.ps1/.sh` - Check Python 3.8+, create venv, install deps
+- `run_tests.ps1/.sh` - Activate venv, run pytest with coverage
+- `pytest.ini` - Config with coverage settings
+- `.gitignore` - Python exclusions
+
+### 4. Documentation (2 files)
+- `README.md` - Quick start, before/after comparison, metrics, testing guide
+- `REFACTORING_PLAN.md` - Problem analysis, design patterns, success metrics
+
+---
+
+## Project Structure
+```
+project_root/
+├── src/agent_tools/
+│   ├── database_tool.py              # Original (provided)
+│   ├── api_tool.py                   # Original (provided)
+│   ├── base_tool.py                  # NEW
+│   ├── database_tool_refactored.py   # NEW
+│   └── api_tool_refactored.py        # NEW
+├── tests/
+│   ├── test_database_tool.py         # NEW
+│   ├── test_api_tool.py              # NEW
+│   └── test_base_tool.py             # NEW
+├── requirements.txt, requirements-dev.txt, pytest.ini, .gitignore
+├── setup_env.ps1/.sh, run_tests.ps1/.sh
+├── README.md, REFACTORING_PLAN.md
+```
+
+---
+
+## Implementation Requirements
+
+### Refactoring Strategy
+1. **BaseTool** - Shared `format_response()` method, error handling decorator
+2. **DatabaseToolRefactored** - Generic `_execute_query(query_type, entity_id)` method
+   - Config dict: `{"users": {"table": "users", "fields": [...]}, ...}`
+   - Parameterized queries: `WHERE id = ?` instead of f-string
+   - Context manager for connections
+3. **APIToolRefactored** - Generic `_make_request(endpoint, params)` method
+   - Centralized `_get_headers()` method
+   - Unified error handling
+
+### Test Requirements
+```python
+# Unit tests with mocking
+def test_query_users_success(db_tool):
+    with patch.object(db_tool, '_execute') as mock:
+        mock.return_value = [[1, "John", "john@example.com", "2024-01-01"]]
+        result = db_tool.query_users(1)
+        assert result["success"] is True
+
+# Parametrized tests
+@pytest.mark.parametrize("query_type", ["users", "products", "orders"])
+def test_execute_query_all_types(db_tool, query_type):
+    # Test generic method
+```
+
+### Automation Scripts
+- **setup_env.ps1/sh**: Check Python 3.8+, create venv, install deps
+- **run_tests.ps1/sh**: `pytest tests/ -v --cov=src/agent_tools --cov-report=term-missing`
+- **pytest.ini**: `testpaths = tests`, `addopts = -v --tb=short --cov=src/agent_tools`
+
+### Documentation
+- **README.md**: Quick start (Windows: `.\setup_env.ps1; .\run_tests.ps1`), before/after comparison, metrics
+- **REFACTORING_PLAN.md**: Problem analysis, design patterns, success metrics
+
+---
+
+## Success Criteria
+
+✅ Code duplication: 80% → <10%  
+✅ All original functionality preserved (outputs match)  
+✅ Comprehensive test suite with unit and comparison tests  
+✅ One-command setup + testing (both Windows/Linux)  
+✅ Cyclomatic complexity reduced >50%  
+✅ README with before/after metrics  
+✅ New developer setup in <5 min  
+✅ REFACTORING_PLAN.md with design decisions  
+
+---
+
+## Key Improvements
+
+**Design Patterns**: Template Method (generic query/request), Decorator (error handling), Context Manager (connections), Strategy (config-driven)  
+**Security**: Parameterized queries (no SQL injection)  
+**Maintainability**: Single source of truth (config dicts), DRY principle  
+**Testability**: Dependency injection, mocking support
+
+---
+
+**Execution**: Analyze → Design → Implement Base → Refactor Tools → Write Tests → Automate → Document → Verify
